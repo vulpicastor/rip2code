@@ -1,0 +1,58 @@
+#! /bin/sh
+
+DGST='sha256sum'
+
+hash_dir () {
+    for d
+    do
+        if [ -d $d ]
+        then
+            cd $d
+            $DGST -b *.$d > SHA256SUMS
+            cd ..
+        fi
+    done
+}
+
+make_flac () {
+    if [ -x `which flac` ]
+    then
+        mkdir -p flac && ( flac --output-prefix="flac/" --preserve-modtime --verify *.wav || ( echo "encoding failed"; exit 1 ) )
+        mkdir -p wav && mv *.inf *.wav wav
+        hash_dir wav flac
+    else
+        echo "flac no found"
+        exit 1
+    fi
+}
+
+make_opus () {
+    cd flac || ( echo "Directory flac no found"; exit 1 )
+    if [ -x `which opusenc` ]
+    then
+        for f in *.flac
+        do
+            opusenc "$f" "${f%.*}.opus"
+        done
+    else
+        echo "opusenc no found!"
+        exit 1
+    fi
+    cd .. && mkdir -p opus && mv flac/*.opus opus
+    hash_dir flac opus
+}
+
+case "$1" in
+    flac)
+        make_flac
+        ;;
+    opus)
+        make_opus
+        ;;
+    *)
+        echo "Invalid command."
+        exit 1
+        ;;
+esac
+
+exit 0
