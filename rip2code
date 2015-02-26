@@ -3,14 +3,15 @@
 DGST='sha256sum'
 
 hash_dir () {
-    for d
+    while [ "$1" ]
     do
-        if [ -d $d ]
+        if [ -d $1 ]
         then
-            cd $d
-            $DGST -b *.$d > SHA256SUMS
+            cd $1
+            $DGST -b *.$1 > SHA256SUMS
             cd ..
         fi
+        shift
     done
 }
 
